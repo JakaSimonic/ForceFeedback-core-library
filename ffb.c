@@ -1,7 +1,6 @@
 /*
 Force Feedback Joystick
 Joystick model specific code for handling force feedback data.
-This code is for Microsoft Sidewinder Force Feedback Pro joystick.
 Copyright 2012  Tero Loimuneva (tloimu [at] gmail [dot] com)
 Copyright 2013  Saku Kekkonen
 Copyright 2016  Jaka Simonic    (telesimke [at] gmail [dot] com)

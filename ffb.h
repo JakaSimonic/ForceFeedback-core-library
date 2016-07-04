@@ -1,8 +1,6 @@
 /*
   Force Feedback Joystick
   USB HID descriptors for a force feedback joystick.  
-  This code is for Microsoft Sidewinder Force Feedback Pro joystick.
-  with some room for additional extra controls.
   Copyright 2012  Tero Loimuneva (tloimu [at] gmail [dot] com)
   Copyright 2016  Jaka Simonic (telesimke [at] gmail [dot] com)
   MIT License.

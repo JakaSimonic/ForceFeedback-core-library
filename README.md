@@ -17,4 +17,8 @@ To use this library you need to:
 
 -to get actuator force you need to call FfbGetFeedbackValue
 
+-provide lib for sine and cosine functions in ffb_math.c
+
+-provide lib for variable types (int32_t etc...) 
+
 The condition effects have not been tested at the moment.

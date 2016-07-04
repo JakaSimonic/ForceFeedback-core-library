@@ -23,7 +23,6 @@ this software.
 #ifndef _FFB_MATH_
 #define _FFB_MATH_
 
-#include "usb_device.h" //device definitions for variable types 
 #include "ffb.h"
 //#include "arm_math.h"
 

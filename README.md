@@ -17,4 +17,4 @@ To use this library you need to:
 
 -to get actuator force you need to call FfbGetFeedbackValue
 
-The condition effect have not been tested at the moment.
+The condition effects have not been tested at the moment.

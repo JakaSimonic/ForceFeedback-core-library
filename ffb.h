@@ -27,8 +27,6 @@
 #ifndef _FFB_
 #define _FFB_
 
-#include "usb_device.h"
-
 /* Type Defines: */
 /** Type define for the joystick HID report structure, for creating and sending HID reports to the host PC.
  *  This mirrors the layout described to the host in the HID report descriptor, in Descriptors.c.

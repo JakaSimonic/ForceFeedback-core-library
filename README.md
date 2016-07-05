@@ -1,13 +1,13 @@
 # ForceFeedback-core-library
 
-This library contains code to process FFB input, output and feature reports. It supports all effects except CustomEffects. Code can handle two axis.
+This library contains code to process FFB input, output and feature reports. It supports all effects except CustomEffects. Code can handle two axis and 10 simultaneous effects.
 This library sits above your USB HID implementation. Library implements only FFB part of joystick. FFB part of HIDdescriptor is in Descriptor.txt. 
 
 To use this library you need to:
 
 -pass output reports to the FfbOnUsbData 
 
--pass data to  FfbOnCreateNewEffect on SET_FEATURE report id 5
+-on SET_FEATURE report id 5 use FfbOnCreateNewEffect
 
 -on GET_FEATURE report id 6 use FfbOnPIDBlockLoad
 
@@ -15,7 +15,7 @@ To use this library you need to:
 
 -on GET_REPORT report id 2 use FfbOnPIDStatus
 
--to get actuator force you need to call FfbGetFeedbackValue
+-to get force for the actuator call FfbGetFeedbackValue. It ranges +/-255
 
 -provide lib for sine and cosine functions in ffb_math.c
 

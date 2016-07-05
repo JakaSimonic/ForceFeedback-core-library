@@ -286,7 +286,7 @@ void FfbHandle_EffectOperation(USB_FFBReport_EffectOperation_Output_Data_t* data
 {
 	if (data->operation == 1)
 	{   // Start
-		if(data->loopCount>0) gEffectStates[data->effectBlockIndex].duration *=data->loopCount;
+		if(data->loopCount > 0) gEffectStates[data->effectBlockIndex].duration *= data->loopCount;
 		if(data->loopCount==0xFF) gEffectStates[data->effectBlockIndex].duration = USB_DURATION_INFINITE;
 		StartEffect(data->effectBlockIndex);
 	}
@@ -347,11 +347,11 @@ void FfbHandle_DeviceControl(USB_FFBReport_DeviceControl_Output_Data_t* data)
 	}
 	else if (control == 0x05)
 	{ // 5=Pause
-		devicePaused=1;
+		devicePaused = 1;
 	}
 	else if (control == 0x06)
 	{ // 6=Continue
-		devicePaused=0;
+		devicePaused = 0;
 	}
 	else if (control & (0xFF - 0x3F))
 	{
@@ -371,7 +371,7 @@ void FfbHandle_SetCustomForce(USB_FFBReport_SetCustomForce_Output_Data_t* data)
 
 void FfbGetFeedbackValue(int16_t* axisPosition, int16_t* out)
 {
-	int32_t x_y_force[2]={0,0};
+	int32_t x_y_force[2] = {0,0};
 	
 	for (uint8_t id = 0; id <= MAX_EFFECTS; id++)
 	{
@@ -389,10 +389,10 @@ void FfbGetFeedbackValue(int16_t* axisPosition, int16_t* out)
 				break;
 			case USB_EFFECT_RAMP:
 				{
-					int32_t end=effect.end*2;
-					int32_t start=effect.start*2;
-					uint32_t elapsedTime=effect.elapsedTime;
-					int32_t duration=effect.duration;
+					int32_t end = effect.end * 2;
+					int32_t start = effect.start * 2;
+					uint32_t elapsedTime = effect.elapsedTime;
+					int32_t duration = effect.duration;
 					
 					int32_t temp = (end - start) * elapsedTime;
 					temp /= duration;
@@ -402,11 +402,11 @@ void FfbGetFeedbackValue(int16_t* axisPosition, int16_t* out)
 				break;
 			case USB_EFFECT_SQUARE:
 				{
-					int32_t offset=effect.offset*2;
-					uint32_t magnitude=effect.magnitude;
-					uint32_t elapsedTime=effect.elapsedTime;
-					uint32_t phase=effect.phase;
-					uint32_t period=effect.period;
+					int32_t offset = effect.offset * 2;
+					uint32_t magnitude = effect.magnitude;
+					uint32_t elapsedTime = effect.elapsedTime;
+					uint32_t phase = effect.phase;
+					uint32_t period = effect.period;
 
 					int32_t max = offset + magnitude;
 					int32_t min = offset - magnitude;
@@ -421,17 +421,17 @@ void FfbGetFeedbackValue(int16_t* axisPosition, int16_t* out)
 				break;
 			case USB_EFFECT_SINE:
 				{
-					float offset=effect.offset*2;
-					float magnitude=effect.magnitude;
-					float phase=effect.phase;
+					float offset = effect.offset * 2;
+					float magnitude = effect.magnitude;
+					float phase = effect.phase;
 					float time = effect.elapsedTime;
 					float period = effect.period;
 					
-					float angle = ((time / period) + (phase/255)*period) * 2 * PI;
+					float angle = ((time / period) + (phase / 255) * period) * 2 * PI;
 					float sine = FfbSin(angle);
-					sine *= magnitude;
-					sine += offset;
-					ApplyDirection(effect, ApplyEnvelope(effect, (int32_t)sine), x_y_force);
+					float tempforce = sine * magnitude;
+					tempForce += offset;
+					ApplyDirection(effect, ApplyEnvelope(effect, (int32_t)tempforce), x_y_force);
 				}
 				break;
 			case USB_EFFECT_TRIANGLE:
@@ -512,7 +512,7 @@ void FfbGetFeedbackValue(int16_t* axisPosition, int16_t* out)
 				break;
 			case USB_EFFECT_DAMPER:
 				{
-					int32_t speed[2] = {NORMALIZE_RANGE(axisPosition[0])- NORMALIZE_RANGE(oldAxisPosition[0]),NORMALIZE_RANGE(axisPosition[1])- NORMALIZE_RANGE(oldAxisPosition[1])};
+					int32_t speed[2] = {NORMALIZE_RANGE(axisPosition[0]) - NORMALIZE_RANGE(oldAxisPosition[0]), NORMALIZE_RANGE(axisPosition[1]) - NORMALIZE_RANGE(oldAxisPosition[1])};
 					int32_t temp[2]={0,0};
 					CalcCondition(effect,temp,speed);
 					x_y_force[0] += -temp[0];
@@ -521,25 +521,25 @@ void FfbGetFeedbackValue(int16_t* axisPosition, int16_t* out)
 				break;
 			case USB_EFFECT_INERTIA:
 				{
-					int32_t speed[2] = {NORMALIZE_RANGE(axisPosition[0])- NORMALIZE_RANGE(oldAxisPosition[0]),NORMALIZE_RANGE(axisPosition[1])- NORMALIZE_RANGE(oldAxisPosition[1])};
-					int32_t acceleration[2]={speed[0]-oldSpeed[0],speed[1]-oldSpeed[1]};
-					int32_t temp[2]={0,0};
+					int32_t speed[2] = {NORMALIZE_RANGE(axisPosition[0]) - NORMALIZE_RANGE(oldAxisPosition[0]), NORMALIZE_RANGE(axisPosition[1]) - NORMALIZE_RANGE(oldAxisPosition[1])};
+					int32_t acceleration[2] = {speed[0] - oldSpeed[0], speed[1] - oldSpeed[1]};
+					int32_t temp[2] = {0, 0};
 					memset((void*)&effect.positiveSaturation, INERTIA_FORCE, 4);
 					memset((void*)&effect.deadBand, INERTIA_DEADBAND, 2);
 					CalcCondition(effect,temp,speed);
 					inertiaT[0] += temp[0];
 					inertiaT[1] += temp[1];
-					x_y_force[0]+=inertiaT[0];
-					x_y_force[1]+=inertiaT[1];
-					if (speed[0]==0) inertiaT[0]=0;
-					if (speed[1]==0) inertiaT[1]=0; 
+					x_y_force[0] += inertiaT[0];
+					x_y_force[1] += inertiaT[1];
+					if (speed[0] == 0) inertiaT[0] = 0;
+					if (speed[1] == 0) inertiaT[1] = 0; 
 					                               
 				}
 				break;
 			case USB_EFFECT_FRICTION:
 				{
-					int32_t speed[2] = {NORMALIZE_RANGE(axisPosition[0])- NORMALIZE_RANGE(oldAxisPosition[0]),NORMALIZE_RANGE(axisPosition[1])- NORMALIZE_RANGE(oldAxisPosition[1])};
-					int32_t temp[2]={0,0};
+					int32_t speed[2] = {NORMALIZE_RANGE(axisPosition[0]) - NORMALIZE_RANGE(oldAxisPosition[0]), NORMALIZE_RANGE(axisPosition[1]) - NORMALIZE_RANGE(oldAxisPosition[1])};
+					int32_t temp[2] = {0, 0};
 					memset((void*)&effect.positiveSaturation, FRICTION_FORCE, 4);
 					memset((void*)&effect.deadBand, FRICTION_DEADBAND, 2);
 					CalcCondition(effect,temp,speed);

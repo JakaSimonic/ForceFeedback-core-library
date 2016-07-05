@@ -7,7 +7,7 @@ To use this library you need to:
 
 -pass output reports to the FfbOnUsbData 
 
--pass data to  FfbOnCreateNewEffect on SET_FEATURE_REPORT ID 5
+-pass data to  FfbOnCreateNewEffect on SET_FEATURE report id 5
 
 -on GET_FEATURE report id 6 use FfbOnPIDBlockLoad
 

@@ -22,3 +22,6 @@ To use this library you need to:
 -provide lib for variable types (int32_t etc...) 
 
 The condition effects have not been tested at the moment.
+
+
+p.s. I have a complete FFB library inside my VjoyWrapper repository written in C#

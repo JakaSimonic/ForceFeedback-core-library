@@ -24,7 +24,6 @@
 #ifndef USERINPUT_h
 #define USERINPUT_h
 
-#include <stdint.h>
 #include "HIDReportType.h"
 
 class UserInput

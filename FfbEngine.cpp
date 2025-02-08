@@ -191,14 +191,15 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
   }
 
   const TEffectState *effectStates = ffbReportHandler->GetEffectStates();
-  float forceAll[NUM_AXES] = {0};
+
+  float forceSum[NUM_AXES] = {0};
+  uint64_t time = getTimeMilli();
 
   for (uint8_t idx = 0; idx <= MAX_EFFECTS; ++idx)
   {
     const TEffectState effect = effectStates[idx];
 
-    uint64_t time = getTimeMilli();
-    if (!ffbReportHandler->devicePaused && IsEffectPlaying(effect, time))
+    if (IsEffectPlaying(effect, time))
     {
       uint8_t effectType = effect.block.effectType;
       uint16_t duration = effect.block.duration;
@@ -226,11 +227,11 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
       case USB_EFFECT_SPRING:
         ConditionForceCalculator(effect, axisPosition.GetMetric(UserInput::position), forceCondition);
         break;
-      case USB_EFFECT_INERTIA:
+      case USB_EFFECT_FRICTION:
       case USB_EFFECT_DAMPER:
         ConditionForceCalculator(effect, axisPosition.GetMetric(UserInput::speed), forceCondition);
         break;
-      case USB_EFFECT_FRICTION:
+      case USB_EFFECT_INERTIA:
         ConditionForceCalculator(effect, axisPosition.GetMetric(UserInput::acceleration), forceCondition);
         break;
       case USB_EFFECT_CUSTOM:
@@ -263,7 +264,7 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
             if (forceHook != nullptr)
               force = forceHook(force, effectType, i);
 
-            forceAll[i] += force;
+            forceSum[i] += force;
           }
         }
         break;
@@ -276,13 +277,10 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
           forceCondition[i] *= gain;
           forceCondition[i] /= USB_MAX_GAIN;
 
-          if (effectType == USB_EFFECT_INERTIA)
-            forceCondition[i] *= -1;
-
           if (forceHook != nullptr)
             force = forceHook(force, effectType, i);
 
-          forceAll[i] += forceCondition[i];
+          forceSum[i] += forceCondition[i];
         }
         break;
       case USB_EFFECT_CUSTOM:
@@ -294,8 +292,10 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
 
   for (uint8_t i = 0; i < NUM_AXES; ++i)
   {
-    forceAll[i] *= ffbReportHandler->deviceGain;
-    forceAll[i] /= USB_MAX_GAIN;
+    forceSum[i] *= ffbReportHandler->deviceGain;
+    forceSum[i] /= USB_MAX_GAIN;
+
+    ffbForce[i] = forceSum[i];
   }
 }
 
@@ -334,14 +334,15 @@ bool IsTriggerEffectPlaying(TEffectState &effect, uint8_t buttonState, uint64_t 
   bool buttonPressed = ((buttonState >> buttonIdx) & 0x01);
   if (!buttonPressed)
   {
-    effect.startTime = 0;
+    effect.triggerButtonLatch = false;
     return false;
   }
   else
   {
-    if (effect.startTime == 0)
+    if (!effect.triggerButtonLatch)
     {
       effect.startTime = time;
+      effect.triggerButtonLatch = true;
       return true;
     }
     else
@@ -360,7 +361,6 @@ bool IsTriggerEffectPlaying(TEffectState &effect, uint8_t buttonState, uint64_t 
 
 bool FfbEngine::IsEffectPlaying(const TEffectState &effect, uint64_t time)
 {
-
   if (!(effect.state & MEFFECTSTATE_PLAYING))
     return false;
 

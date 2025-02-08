@@ -256,6 +256,7 @@ typedef struct
   uint64_t startTime;
   float directionUnitVec[NUM_AXES];
   bool envelopeParameter = false;
+  bool triggerButtonLatch = false;
 
   USB_FFBReport_SetEffect_Output_Data_t block;
   TEffectParameter parameters[NUM_AXES];

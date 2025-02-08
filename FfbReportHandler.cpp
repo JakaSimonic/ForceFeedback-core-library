@@ -25,7 +25,6 @@
 */
 
 #include "FfbReportHandler.h"
-#include "debug.h"
 #include <string.h>
 #include <math.h>
 
@@ -177,13 +176,18 @@ void FfbReportHandler::FfbHandle_DeviceControl(USB_FFBReport_DeviceControl_Outpu
   case 6:
     // 6=Continue
     devicePaused = 0;
+
+    if (pauseTime == 0)
+      break;
+
+    uint32_t pauseLength = getTimeMilli() - pauseTime;
     for (int id = 0; id < MAX_EFFECTS; ++id)
     {
-      if (MEFFECTSTATE_PLAYING == gEffectStates[id].state)
+      if (gEffectStates[id].state & MEFFECTSTATE_PLAYING)
       {
         if (pauseTime <= gEffectStates[id].startTime)
           continue;
-        gEffectStates[id].startTime += pauseTime - gEffectStates[id].startTime;
+        gEffectStates[id].startTime += pauseLength;
       }
     }
     pauseTime = 0;
@@ -210,7 +214,7 @@ void FfbReportHandler::FfbHandle_SetDownloadForceSample(USB_FFBReport_SetDownloa
 void FfbReportHandler::FfbHandle_SetEffect(USB_FFBReport_SetEffect_Output_Data_t *data)
 {
   TEffectState *effectState = GetEffect(data->effectBlockIndex);
-  volatile USB_FFBReport_SetEffect_Output_Data_t *block = &effectState->block;
+  USB_FFBReport_SetEffect_Output_Data_t *block = &effectState->block;
   memcpy((void *)block, data, sizeof(USB_FFBReport_SetEffect_Output_Data_t));
 
   float normalizedDirectionX = data->directionX / USB_NORMALIZE_RAD;
@@ -230,7 +234,7 @@ void FfbReportHandler::FfbHandle_SetEffect(USB_FFBReport_SetEffect_Output_Data_t
 
 void FfbReportHandler::SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t *data, TEffectState *effect)
 {
-  volatile USB_FFBReport_SetEnvelope_Output_Data_t *periodic = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_2].envelope;
+  USB_FFBReport_SetEnvelope_Output_Data_t *periodic = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_2].envelope;
   memcpy((void *)periodic, data, sizeof(USB_FFBReport_SetEnvelope_Output_Data_t));
 }
 
@@ -239,27 +243,26 @@ void FfbReportHandler::SetCondition(USB_FFBReport_SetCondition_Output_Data_t *da
   uint8_t parameterBlockOffset = data->parameterBlockOffset & 0x0F;
   if (parameterBlockOffset > NUM_AXES - 1)
     return;
-  volatile USB_FFBReport_SetCondition_Output_Data_t *condition = &effect->parameters[parameterBlockOffset].condition;
+  USB_FFBReport_SetCondition_Output_Data_t *condition = &effect->parameters[parameterBlockOffset].condition;
   memcpy((void *)condition, data, sizeof(USB_FFBReport_SetCondition_Output_Data_t));
 }
 
 void FfbReportHandler::SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t *data, TEffectState *effect)
 {
-  volatile USB_FFBReport_SetPeriodic_Output_Data_t *periodic = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].periodic;
+  USB_FFBReport_SetPeriodic_Output_Data_t *periodic = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].periodic;
   memcpy((void *)periodic, data, sizeof(USB_FFBReport_SetPeriodic_Output_Data_t));
   effect->envelopeParameter = true;
 }
 
 void FfbReportHandler::SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data, TEffectState *effect)
 {
-  //  ReportPrint(*effect);
-  volatile USB_FFBReport_SetConstantForce_Output_Data_t *constant = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].constant;
+  USB_FFBReport_SetConstantForce_Output_Data_t *constant = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].constant;
   memcpy((void *)constant, data, sizeof(USB_FFBReport_SetConstantForce_Output_Data_t));
 }
 
 void FfbReportHandler::SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t *data, TEffectState *effect)
 {
-  volatile USB_FFBReport_SetRampForce_Output_Data_t *ramp = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].ramp;
+  USB_FFBReport_SetRampForce_Output_Data_t *ramp = &effect->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].ramp;
   memcpy((void *)ramp, data, sizeof(USB_FFBReport_SetRampForce_Output_Data_t));
 }
 

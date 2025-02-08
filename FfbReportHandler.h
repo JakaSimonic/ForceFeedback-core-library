@@ -44,7 +44,7 @@ public:
   void FfbOnUsbData(uint8_t *data, uint16_t len);
   const TEffectState *GetEffectStates();
 
-  uint8_t devicePaused;
+  volatile uint8_t devicePaused;
   uint8_t deviceGain;
 
 private:

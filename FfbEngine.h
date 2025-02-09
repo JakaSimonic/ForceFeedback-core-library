@@ -40,9 +40,8 @@
 class FfbEngine
 {
 public:
-  FfbEngine(FfbReportHandler *reporthandler, uint64_t (*)(void), int32_t (*)(float, int8_t, int8_t) = nullptr);
+  FfbEngine(FfbReportHandler &reporthandler, UserInput &uIn, uint64_t (*)(void), int32_t (*)(float, int8_t, int8_t) = nullptr);
   ~FfbEngine();
-  FfbReportHandler *ffbReportHandler;
 
   void ForceCalculator(int32_t[NUM_AXES]);
   float ConstantForceCalculator(const TEffectState &effect, int32_t elapsedTime);
@@ -52,9 +51,9 @@ public:
   float GetEnvelope(const USB_FFBReport_SetEnvelope_Output_Data_t &effect, uint32_t elapsedTime, uint16_t duration);
   bool IsEffectPlaying(const TEffectState &effect, uint64_t time);
 
-  UserInput axisPosition;
-
 private:
+  FfbReportHandler &ffbReportHandler;
+  UserInput &axisPosition;
   uint64_t (*getTimeMilli)(void);
   int32_t (*forceHook)(float forceValue, int8_t effect, int8_t axisIndex);
 

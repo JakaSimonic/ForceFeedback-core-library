@@ -26,10 +26,12 @@
 #include "HIDReportType.h"
 
 FfbEngine::FfbEngine(
-    FfbReportHandler *reporthandler,
+    FfbReportHandler &reporthandler,
+    UserInput &uIn,
     uint64_t (*pTime)(void),
-    int32_t (*fHook)(float, int8_t, int8_t)) : getTimeMilli{pTime},
-                                               ffbReportHandler{reporthandler},
+    int32_t (*fHook)(float, int8_t, int8_t)) : ffbReportHandler{reporthandler},
+                                               axisPosition{uIn},
+                                               getTimeMilli{pTime},
                                                forceHook{fHook}
 {
 }
@@ -181,7 +183,7 @@ void FfbEngine::ConditionForceCalculator(const TEffectState &effect, const int32
 
 void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
 {
-  if (ffbReportHandler->devicePaused)
+  if (ffbReportHandler.devicePaused)
   {
     for (uint8_t i = 0; i < NUM_AXES; ++i)
     {
@@ -190,7 +192,7 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
     return;
   }
 
-  const TEffectState *effectStates = ffbReportHandler->GetEffectStates();
+  const TEffectState *effectStates = ffbReportHandler.GetEffectStates();
 
   float forceSum[NUM_AXES] = {0};
   uint64_t time = getTimeMilli();
@@ -292,7 +294,7 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
 
   for (uint8_t i = 0; i < NUM_AXES; ++i)
   {
-    forceSum[i] *= ffbReportHandler->deviceGain;
+    forceSum[i] *= ffbReportHandler.deviceGain;
     forceSum[i] /= USB_MAX_GAIN;
 
     ffbForce[i] = forceSum[i];

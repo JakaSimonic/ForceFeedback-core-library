@@ -45,7 +45,7 @@ public:
   const TEffectState *GetEffectStates();
 
   volatile uint8_t devicePaused;
-  uint8_t deviceGain;
+  uint8_t deviceGain = USB_MAX_GAIN;
 
 private:
   // ffb state structures
@@ -67,11 +67,11 @@ private:
   void FfbHandle_SetDownloadForceSample(USB_FFBReport_SetDownloadForceSample_Output_Data_t *data);
   void FfbHandle_SetCustomForce(USB_FFBReport_SetCustomForce_Output_Data_t *data);
   void FfbHandle_SetEffect(USB_FFBReport_SetEffect_Output_Data_t *data);
-  void SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t *data, TEffectState *effect);
-  void SetCondition(USB_FFBReport_SetCondition_Output_Data_t *data, TEffectState *effect);
-  void SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t *data, TEffectState *effect);
-  void SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data, TEffectState *effect);
-  void SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t *data, TEffectState *effect);
+  void SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t *data);
+  void SetCondition(USB_FFBReport_SetCondition_Output_Data_t *data);
+  void SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t *data);
+  void SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data);
+  void SetRampForce(USB_FFBReport_SetRampForce_Output_Data_t *data);
 
   TEffectState gEffectStates[MAX_EFFECTS];
 

@@ -375,7 +375,7 @@ bool FfbEngine::IsEffectPlaying(const TEffectState &effect, uint64_t time)
   if (elapsedTime < 0)
     return false;
 
-  if ((effect.block.duration != USB_DURATION_INFINITE) && (elapsedTime > effect.block.duration))
+  if ((effect.block.duration != USB_DURATION_INFINITE) && (elapsedTime >= effect.block.duration))
     return false;
 
   return true;

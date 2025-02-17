@@ -2,6 +2,19 @@
 #define HID_TYPES_EXT
 #include "../../HIDReportType.h"
 
+struct SetEnvelope_Ext : public USB_FFBReport_SetEnvelope_Output_Data_t
+{
+    SetEnvelope_Ext(uint8_t effectBlockIndex, int16_t attackLevel, int16_t fadeLevel, int16_t attackTime, int16_t fadeTime)
+    {
+        this->reportId = SET_ENVELOPE_REPORT;
+        this->effectBlockIndex = effectBlockIndex;
+        this->attackLevel = attackLevel;
+        this->fadeLevel = fadeLevel;
+        this->attackTime = attackTime;
+        this->fadeTime = fadeTime;
+    }
+};
+
 struct SetConstantForce_Ext : public USB_FFBReport_SetConstantForce_Output_Data_t
 {
     SetConstantForce_Ext(uint8_t effectBlockIndex, int16_t magnitude)
@@ -23,8 +36,8 @@ struct SetEffect_Ext : public USB_FFBReport_SetEffect_Output_Data_t
         uint8_t gain,
         uint8_t triggerButton,
         uint8_t enableAxis,
-        uint8_t directionX,
-        uint8_t directionY,
+        uint16_t directionX,
+        uint16_t directionY,
         uint16_t startDelay)
     {
         this->reportId = SET_EFFECT_REPORT;

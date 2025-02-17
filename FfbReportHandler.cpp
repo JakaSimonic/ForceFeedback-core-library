@@ -218,8 +218,12 @@ void FfbReportHandler::FfbHandle_SetEffect(USB_FFBReport_SetEffect_Output_Data_t
   USB_FFBReport_SetEffect_Output_Data_t *block = &effectState->block;
   memcpy((void *)block, data, sizeof(USB_FFBReport_SetEffect_Output_Data_t));
 
-  float normalizedDirectionX = data->directionX / USB_NORMALIZE_RAD;
-  float normalizedDirectionY = data->directionY / USB_NORMALIZE_RAD;
+  float normalizedDirectionX = data->directionX;
+  normalizedDirectionX /= USB_NORMALIZE_RAD;
+  
+  float normalizedDirectionY = data->directionY;
+  normalizedDirectionY /= USB_NORMALIZE_RAD;
+
   uint8_t enableAxis = data->enableAxis;
   if (enableAxis & DIRECTION_ENABLE)
   {
@@ -238,6 +242,7 @@ void FfbReportHandler::SetEnvelope(USB_FFBReport_SetEnvelope_Output_Data_t *data
   TEffectState *effectState = GetEffect(data->effectBlockIndex);
   USB_FFBReport_SetEnvelope_Output_Data_t *periodic = &effectState->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_2].envelope;
   memcpy((void *)periodic, data, sizeof(USB_FFBReport_SetEnvelope_Output_Data_t));
+  effectState->envelopeParameter = true;
 }
 
 void FfbReportHandler::SetCondition(USB_FFBReport_SetCondition_Output_Data_t *data)
@@ -256,7 +261,6 @@ void FfbReportHandler::SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t *data
   TEffectState *effectState = GetEffect(data->effectBlockIndex);
   USB_FFBReport_SetPeriodic_Output_Data_t *periodic = &effectState->parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].periodic;
   memcpy((void *)periodic, data, sizeof(USB_FFBReport_SetPeriodic_Output_Data_t));
-  effectState->envelopeParameter = true;
 }
 
 void FfbReportHandler::SetConstantForce(USB_FFBReport_SetConstantForce_Output_Data_t *data)

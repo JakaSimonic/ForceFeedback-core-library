@@ -26,17 +26,6 @@
 #include "FfbReportHandler.h"
 #include "UserInput.h"
 
-#define WHEEL_SAMPLE_RATE_MS 10
-#define WHEEL_RANGE 0x03B7
-
-#ifndef PI
-#define PI (float)3.14159265359 // consider using library defined value of PI
-#endif
-#ifndef DEG_TO_RAD
-#define DEG_TO_RAD ((float)(PI / 180))
-#endif
-#define NORMALIZE_RANGE(x) ((int32_t)((x * 255) / WHEEL_RANGE))
-
 class FfbEngine
 {
 public:
@@ -44,10 +33,10 @@ public:
   ~FfbEngine();
 
   void ForceCalculator(int32_t[NUM_AXES]);
-  float ConstantForceCalculator(const TEffectState &effect, int32_t elapsedTime);
-  float RampForceCalculator(const TEffectState &effect, int32_t elapsedTime);
+  float ConstantForceCalculator(const TEffectState &effect);
+  float RampForceCalculator(const TEffectState &effect, float elapsedTime);
   void ConditionForceCalculator(const TEffectState &effect, const int32_t metric[NUM_AXES], float outForce[NUM_AXES]);
-  float PeriodiceForceCalculator(uint8_t effectType, const TEffectState &effect, int32_t elapsedTime);
+  float PeriodiceForceCalculator(uint8_t effectType, const TEffectState &effect, float elapsedTime);
   float GetEnvelope(const USB_FFBReport_SetEnvelope_Output_Data_t &effect, uint32_t elapsedTime, uint16_t duration);
   bool IsEffectPlaying(const TEffectState &effect, uint64_t time);
 

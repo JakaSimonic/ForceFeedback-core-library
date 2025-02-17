@@ -70,8 +70,8 @@ typedef struct
   uint8_t gain;                   // 0..255	 (physical 0..10000)
   uint8_t triggerButton;          // button ID (0..8)
   uint8_t enableAxis;             // bits: 0=X, 1=Y, 2=DirectionEnable
-  uint8_t directionX;             // angle (0=0 .. 6283=36000^-2deg)
-  uint8_t directionY;             // angle (0=0 .. 6283=36000^-2deg)
+  uint16_t directionX;            // angle (0=0 .. 6283=36000^-2deg)
+  uint16_t directionY;            // angle (0=0 .. 6283=36000^-2deg)
   uint16_t startDelay;            // 0..32767 ms
 } USB_FFBReport_SetEffect_Output_Data_t;
 
@@ -204,7 +204,7 @@ typedef struct
 #define USB_MAX_GAIN 255
 #define USB_MAX_PHASE 6283
 #define USB_PI 3141
-#define USB_NORMALIZE_RAD 1000.0
+#define USB_NORMALIZE_RAD 1000
 
 #define USB_EFFECT_CONSTANT 0x01
 #define USB_EFFECT_RAMP 0x02

@@ -40,26 +40,27 @@ FfbEngine::~FfbEngine()
 {
 }
 
-float FfbEngine::ConstantForceCalculator(const TEffectState &effect, int32_t elapsedTime)
+float FfbEngine::ConstantForceCalculator(const TEffectState &effect)
 {
-  return (float)effect.parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].constant.magnitude;
+  return effect.parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].constant.magnitude;
 }
 
-float FfbEngine::RampForceCalculator(const TEffectState &effect, int32_t elapsedTime)
+float FfbEngine::RampForceCalculator(const TEffectState &effect, float elapsedTime)
 {
   const USB_FFBReport_SetRampForce_Output_Data_t &ramp = effect.parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].ramp;
 
-  float tempForce = ramp.startMagnitude + (float)elapsedTime * (ramp.endMagnitude - ramp.startMagnitude) / effect.block.duration;
+  float tempForce = ramp.startMagnitude + elapsedTime * (ramp.endMagnitude - ramp.startMagnitude) / effect.block.duration;
   return tempForce;
 }
 
-float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState &effect, int32_t elapsedTime)
+float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState &effect, float elapsedTime)
 {
   const USB_FFBReport_SetPeriodic_Output_Data_t &periodic = effect.parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].periodic;
 
   int32_t offset = periodic.offset;
   uint32_t magnitude = periodic.magnitude;
-  uint32_t phase = periodic.phase;
+  float phase = periodic.phase;
+  float phase_normalized = phase / USB_MAX_PHASE;
   uint32_t period = periodic.period;
 
   float tempForce = 0;
@@ -69,9 +70,9 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
   {
     int32_t maxMagnitude = offset + magnitude;
     int32_t minMagnitude = offset - magnitude;
-    uint32_t phasetime = (phase * period) / USB_MAX_PHASE;
-    uint32_t timeTemp = elapsedTime + phasetime;
-    uint32_t reminder = timeTemp % period;
+    float phasetime = phase_normalized * period;
+    float timeTemp = elapsedTime + phasetime;
+    uint32_t reminder = timeTemp / period;
     if (reminder > (period / 2))
       tempForce = minMagnitude;
     else
@@ -80,7 +81,7 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
   break;
   case USB_EFFECT_SINE:
   {
-    float angle = (2 * USB_PI * elapsedTime / period + phase) / USB_NORMALIZE_RAD;
+    float angle =  2 * M_PI * (elapsedTime / period + phase_normalized);
     tempForce = sin(angle) * magnitude;
     tempForce += offset;
   }
@@ -89,10 +90,11 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
   {
     int32_t maxMagnitude = offset + magnitude;
     int32_t minMagnitude = offset - magnitude;
-    uint32_t phasetime = (phase * period) / USB_MAX_PHASE;
-    uint32_t timeTemp = elapsedTime + phasetime;
-    uint32_t reminder = timeTemp % period;
-    float slope = (float)((maxMagnitude - minMagnitude) * 2) / period;
+    float phasetime = phase_normalized * period;
+    float timeTemp = elapsedTime + phasetime;
+    uint32_t reminder = timeTemp / period;
+    float height = maxMagnitude - minMagnitude;
+    float slope = 2 * height / period;
 
     if (reminder > (period / 2))
       tempForce = slope * (period - reminder);
@@ -106,9 +108,9 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
   {
     int32_t maxMagnitude = offset + magnitude;
     int32_t minMagnitude = offset - magnitude;
-    int32_t phasetime = (phase * period) / USB_MAX_PHASE;
-    uint32_t timeTemp = elapsedTime + phasetime;
-    float reminder = timeTemp % period;
+    float phasetime = phase_normalized * period;
+    float timeTemp = elapsedTime + phasetime;
+    float reminder = timeTemp / period;
     float slope = (maxMagnitude - minMagnitude) / period;
 
     if (effectType == USB_EFFECT_SAWTOOTHDOWN)
@@ -214,7 +216,7 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
       switch (effectType)
       {
       case USB_EFFECT_CONSTANT:
-        force = ConstantForceCalculator(effect, elapsedTime);
+        force = ConstantForceCalculator(effect);
         break;
       case USB_EFFECT_RAMP:
         force = RampForceCalculator(effect, elapsedTime);
@@ -305,28 +307,31 @@ float FfbEngine::GetEnvelope(const USB_FFBReport_SetEnvelope_Output_Data_t &enve
 {
   int32_t attackLevel = envelope.attackLevel;
   int32_t fadeLevel = envelope.fadeLevel;
-  int32_t envelopeValue = USB_MAX_MAGNITUDE;
+  float envelopeValue = USB_MAX_MAGNITUDE;
   int32_t attackTime = envelope.attackTime;
   int32_t fadeTime = envelope.fadeTime;
 
   if (elapsedTime < attackTime)
   {
-    envelopeValue = (USB_MAX_MAGNITUDE - attackLevel) * elapsedTime;
-    envelopeValue /= attackTime;
-    envelopeValue += attackLevel;
+    float slope = (USB_MAX_MAGNITUDE - attackLevel) / attackTime;
+    envelopeValue = slope * elapsedTime + attackLevel;
+    return envelopeValue / USB_MAX_MAGNITUDE;
   }
-  else if (duration < USB_DURATION_INFINITE && elapsedTime > (duration - fadeTime))
+  
+  if (duration == USB_DURATION_INFINITE)
   {
-    envelopeValue = (USB_MAX_MAGNITUDE - fadeLevel) * (duration - elapsedTime);
-    envelopeValue /= fadeTime;
-    envelopeValue += fadeLevel;
-  }
-  else
-  {
-    return 1.0; // USB_MAX_MAGNITUDE / USB_MAX_MAGNITUDE
+    return 1.0;
   }
 
-  return (float)envelopeValue / USB_MAX_MAGNITUDE;
+  --duration;
+  if (elapsedTime > (duration - fadeTime))
+  {
+    float slope = (USB_MAX_MAGNITUDE - fadeLevel) / fadeTime;
+    envelopeValue = slope * (duration - elapsedTime) + fadeLevel;
+    return envelopeValue / USB_MAX_MAGNITUDE;
+  }
+
+  return 1.0;
 }
 
 bool IsTriggerEffectPlaying(TEffectState &effect, uint8_t buttonState, uint64_t time)

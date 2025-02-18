@@ -2,6 +2,19 @@
 #define HID_TYPES_EXT
 #include "../../HIDReportType.h"
 
+struct SetPeriodic_Ext : public USB_FFBReport_SetPeriodic_Output_Data_t
+{
+    SetPeriodic_Ext(uint8_t effectBlockIndex, uint16_t magnitude, int16_t offset, uint16_t phase, uint16_t period)
+    {
+        this->reportId = SET_PERIODIC_REPORT;
+        this->effectBlockIndex = effectBlockIndex;
+        this->magnitude = magnitude;
+        this->offset = offset;
+        this->phase = phase;
+        this->period = period;
+    }
+};
+
 struct SetEnvelope_Ext : public USB_FFBReport_SetEnvelope_Output_Data_t
 {
     SetEnvelope_Ext(uint8_t effectBlockIndex, int16_t attackLevel, int16_t fadeLevel, int16_t attackTime, int16_t fadeTime)

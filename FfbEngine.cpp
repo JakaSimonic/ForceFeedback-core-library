@@ -71,9 +71,9 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
     int32_t maxMagnitude = offset + magnitude;
     int32_t minMagnitude = offset - magnitude;
     float phasetime = phase_normalized * period;
-    float timeTemp = elapsedTime + phasetime;
-    uint32_t reminder = timeTemp / period;
-    if (reminder > (period / 2))
+    uint32_t timeTemp = elapsedTime + phasetime;
+    uint32_t reminder = timeTemp % period;
+    if (reminder >= (period / 2))
       tempForce = minMagnitude;
     else
       tempForce = maxMagnitude;
@@ -91,12 +91,12 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
     int32_t maxMagnitude = offset + magnitude;
     int32_t minMagnitude = offset - magnitude;
     float phasetime = phase_normalized * period;
-    float timeTemp = elapsedTime + phasetime;
-    uint32_t reminder = timeTemp / period;
+    uint32_t timeTemp = elapsedTime + phasetime;
+    uint32_t reminder = timeTemp % period;
     float height = maxMagnitude - minMagnitude;
     float slope = 2 * height / period;
 
-    if (reminder > (period / 2))
+    if (reminder >= (period / 2))
       tempForce = slope * (period - reminder);
     else
       tempForce = slope * reminder;
@@ -109,8 +109,8 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
     int32_t maxMagnitude = offset + magnitude;
     int32_t minMagnitude = offset - magnitude;
     float phasetime = phase_normalized * period;
-    float timeTemp = elapsedTime + phasetime;
-    float reminder = timeTemp / period;
+    uint32_t timeTemp = elapsedTime + phasetime;
+    uint32_t reminder = timeTemp % period;
     float slope = (maxMagnitude - minMagnitude) / period;
 
     if (effectType == USB_EFFECT_SAWTOOTHDOWN)

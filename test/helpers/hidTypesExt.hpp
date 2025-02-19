@@ -2,12 +2,23 @@
 #define HID_TYPES_EXT
 #include "../../HIDReportType.h"
 
-struct BlockFree_Ext: public USB_FFBReport_BlockFree_Output_Data_t
+struct BlockFree_Ext : public USB_FFBReport_BlockFree_Output_Data_t
 {
     BlockFree_Ext(uint8_t effectBlockIndex = 0xFF)
     {
         this->reportId = SET_BLOCK_FREE_REPORT;
         this->effectBlockIndex = effectBlockIndex;
+    }
+};
+
+struct SetRampForce_Ext : public USB_FFBReport_SetRampForce_Output_Data_t
+{
+    SetRampForce_Ext(uint8_t effectBlockIndex, uint16_t startMagnitude, uint16_t endMagnitude)
+    {
+        this->reportId = SET_RAMP_FORCE_REPORT;
+        this->effectBlockIndex = effectBlockIndex;
+        this->startMagnitude = startMagnitude;
+        this->endMagnitude = endMagnitude;
     }
 };
 

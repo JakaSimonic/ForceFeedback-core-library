@@ -57,67 +57,56 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
 {
   const USB_FFBReport_SetPeriodic_Output_Data_t &periodic = effect.parameters[TYPE_SPECIFIC_BLOCK_OFFSET_1].periodic;
 
-  int32_t offset = periodic.offset;
-  uint32_t magnitude = periodic.magnitude;
+  float offset = periodic.offset;
+  float magnitude = periodic.magnitude;
   float phase = periodic.phase;
-  float phase_normalized = phase / USB_MAX_PHASE;
   uint32_t period = periodic.period;
+
+  float phaseNormalized = phase / USB_MAX_PHASE;
+  uint32_t elapsedPlusPhaseTime = phaseNormalized * period + elapsedTime;
+  uint32_t remainder = elapsedPlusPhaseTime % period;
 
   float tempForce = 0;
   switch (effectType)
   {
   case USB_EFFECT_SQUARE:
   {
-    int32_t maxMagnitude = offset + magnitude;
-    int32_t minMagnitude = offset - magnitude;
-    float phasetime = phase_normalized * period;
-    uint32_t timeTemp = elapsedTime + phasetime;
-    uint32_t reminder = timeTemp % period;
-    if (reminder >= (period / 2))
-      tempForce = minMagnitude;
+    if (remainder >= (period / 2))
+      tempForce = -magnitude;
     else
-      tempForce = maxMagnitude;
+      tempForce = magnitude;
+    tempForce += offset;
   }
   break;
   case USB_EFFECT_SINE:
   {
-    float angle = 2 * M_PI * (elapsedTime / period + phase_normalized);
+    float angle = 2 * M_PI * (elapsedTime / period + phaseNormalized);
     tempForce = sin(angle) * magnitude;
     tempForce += offset;
   }
   break;
   case USB_EFFECT_TRIANGLE:
   {
-    int32_t maxMagnitude = offset + magnitude;
-    int32_t minMagnitude = offset - magnitude;
-    float phasetime = phase_normalized * period;
-    uint32_t timeTemp = elapsedTime + phasetime;
-    uint32_t reminder = timeTemp % period;
-    float height = maxMagnitude - minMagnitude;
-    float slope = 2 * height / period;
-
-    if (reminder >= (period / 2))
-      tempForce = slope * (period - reminder);
+    float slope = 4 * magnitude / period;
+    const uint32_t phaseOffset = period / 4;
+    uint32_t offsetRemainder = (remainder + phaseOffset) % period;
+    if (offsetRemainder >= (period / 2))
+      tempForce = slope * (period - offsetRemainder);
     else
-      tempForce = slope * reminder;
-    tempForce += minMagnitude;
+      tempForce = slope * offsetRemainder;
+    tempForce -= magnitude;
+    tempForce += offset;
   }
   break;
   case USB_EFFECT_SAWTOOTHUP:
   case USB_EFFECT_SAWTOOTHDOWN:
   {
-    int32_t maxMagnitude = offset + magnitude;
-    int32_t minMagnitude = offset;
-    float phasetime = phase_normalized * period;
-    uint32_t timeTemp = elapsedTime + phasetime;
-    uint32_t reminder = timeTemp % period;
-    float slope = (maxMagnitude - minMagnitude) / period;
-
+    float slope = magnitude / period;
     if (effectType == USB_EFFECT_SAWTOOTHDOWN)
-      tempForce = slope * (period - reminder);
+      tempForce = slope * (period - remainder);
     else
-      tempForce = slope * reminder;
-    tempForce += minMagnitude;
+      tempForce = slope * remainder;
+    tempForce += offset;
   }
   break;
   default:

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <memory>
 #include <math.h>
+#include <numeric>
 
 #include "../UserInput.h"
 #include "../FfbEngine.h"
@@ -65,6 +66,54 @@ protected:
     }
 };
 
+TEST_F(HidAbstractor, TestRampForce)
+{
+    ResetFakeTime();
+    int effectBlock = CreateEffect(USB_EFFECT_RAMP, 4, 0, 0, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
+    SetReport<SetRampForce_Ext>(effectBlock, 60, 100);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+
+    int forces[2] = {0};
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 60);
+    TickFakeTime();
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 70);
+    TickFakeTime();
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 80);
+    TickFakeTime();
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 90);
+    TickFakeTime();
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 0);
+    TickFakeTime();
+}
+
+TEST_F(HidAbstractor, TestTriangleWave)
+{
+    ResetFakeTime();
+    int test_samples = 100;
+    int effectBlock = CreateEffect(USB_EFFECT_TRIANGLE, test_samples, 0, 0, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
+    SetReport<SetPeriodic_Ext>(effectBlock, 100, 1, 0, test_samples);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    int forces[2] = {0};
+    int forceSum = 0;
+    for (int i = 0; i < test_samples; ++i)
+    {
+        ffe->ForceCalculator(forces);
+        forceSum += forces[0];
+        TickFakeTime();
+    }
+
+    EXPECT_EQ(forceSum, 100);
+}
+
 TEST_F(HidAbstractor, TestSawtoothUpDownSimultaneous)
 {
     int test_samples = 1000;
@@ -80,17 +129,15 @@ TEST_F(HidAbstractor, TestSawtoothUpDownSimultaneous)
     SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
 
     int forces[2] = {0};
-    int forceSum = 0;
     for (int i = 0; i < test_samples; ++i)
     {
         ffe->ForceCalculator(forces);
-        forceSum += forces[0];
-        if (forceSum != 0)
-            std::cout << i << " " << forceSum << std::endl;
+
+        int forceSum = std::accumulate(forces, forces + NUM_AXES, 0);
+        EXPECT_EQ(forceSum, 100);
+
         TickFakeTime();
     }
-
-    EXPECT_EQ(forceSum, 0);
 }
 
 TEST_F(HidAbstractor, TestPeriodicPhase)

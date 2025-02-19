@@ -81,7 +81,7 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
   break;
   case USB_EFFECT_SINE:
   {
-    float angle =  2 * M_PI * (elapsedTime / period + phase_normalized);
+    float angle = 2 * M_PI * (elapsedTime / period + phase_normalized);
     tempForce = sin(angle) * magnitude;
     tempForce += offset;
   }
@@ -107,7 +107,7 @@ float FfbEngine::PeriodiceForceCalculator(uint8_t effectType, const TEffectState
   case USB_EFFECT_SAWTOOTHDOWN:
   {
     int32_t maxMagnitude = offset + magnitude;
-    int32_t minMagnitude = offset - magnitude;
+    int32_t minMagnitude = offset;
     float phasetime = phase_normalized * period;
     uint32_t timeTemp = elapsedTime + phasetime;
     uint32_t reminder = timeTemp % period;
@@ -317,7 +317,7 @@ float FfbEngine::GetEnvelope(const USB_FFBReport_SetEnvelope_Output_Data_t &enve
     envelopeValue = slope * elapsedTime + attackLevel;
     return envelopeValue / USB_MAX_MAGNITUDE;
   }
-  
+
   if (duration == USB_DURATION_INFINITE)
   {
     return 1.0;

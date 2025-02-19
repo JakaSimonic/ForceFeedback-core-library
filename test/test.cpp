@@ -36,17 +36,17 @@ protected:
     }
 
     UserInput ui;
-    FfbReportHandler* ffh = nullptr;
-    FfbEngine* ffe = nullptr;
+    FfbReportHandler *ffh = nullptr;
+    FfbEngine *ffe = nullptr;
 
     template <typename... Args>
     int CreateEffect(Args... args)
     {
-        ffh->FfbOnCreateNewEffect((USB_FFBReport_CreateNewEffect_Feature_Data_t*)0);
+        ffh->FfbOnCreateNewEffect((USB_FFBReport_CreateNewEffect_Feature_Data_t *)0);
         int effectBlock = ffh->FfbOnPIDBlockLoad()[1];
 
         auto effect = Reportfactory<SetEffect_Ext>(effectBlock, args...);
-        ffh->FfbOnUsbData((uint8_t*)effect.get(), sizeof(SetEffect_Ext));
+        ffh->FfbOnUsbData((uint8_t *)effect.get(), sizeof(SetEffect_Ext));
 
         return effectBlock;
     }
@@ -61,9 +61,37 @@ protected:
     void SetReport(Args... args)
     {
         auto report = Reportfactory<T>(args...);
-        ffh->FfbOnUsbData((uint8_t*)report.get(), sizeof(T));
+        ffh->FfbOnUsbData((uint8_t *)report.get(), sizeof(T));
     }
 };
+
+TEST_F(HidAbstractor, TestSawtoothUpDownSimultaneous)
+{
+    int test_samples = 1000;
+
+    ResetFakeTime();
+
+    int effectBlock = CreateEffect(USB_EFFECT_SAWTOOTHUP, test_samples, 0, 0, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
+    SetReport<SetPeriodic_Ext>(effectBlock, 100, 0, 0, test_samples);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+
+    effectBlock = CreateEffect(USB_EFFECT_SAWTOOTHDOWN, test_samples, 0, 0, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
+    SetReport<SetPeriodic_Ext>(effectBlock, 100, 0, 0, test_samples);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+
+    int forces[2] = {0};
+    int forceSum = 0;
+    for (int i = 0; i < test_samples; ++i)
+    {
+        ffe->ForceCalculator(forces);
+        forceSum += forces[0];
+        if (forceSum != 0)
+            std::cout << i << " " << forceSum << std::endl;
+        TickFakeTime();
+    }
+
+    EXPECT_EQ(forceSum, 0);
+}
 
 TEST_F(HidAbstractor, TestPeriodicPhase)
 {
@@ -71,10 +99,10 @@ TEST_F(HidAbstractor, TestPeriodicPhase)
     int test_samples = 100;
     for (int phase = 0; phase < USB_MAX_PHASE; phase += 10)
     {
-        int effectBlock = CreateEffect(USB_EFFECT_SINE, test_samples, 0, 1, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
+        int effectBlock = CreateEffect(USB_EFFECT_SINE, test_samples, 0, 0, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
         SetReport<SetPeriodic_Ext>(effectBlock, 100, 0, phase, test_samples);
         SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
-        int forces[2] = { 0 };
+        int forces[2] = {0};
         int forceSum = 0;
         for (int i = 0; i < test_samples; ++i)
         {
@@ -92,10 +120,10 @@ TEST_F(HidAbstractor, TestSineWave)
 {
     ResetFakeTime();
     int test_samples = 100;
-    int effectBlock = CreateEffect(USB_EFFECT_SINE, test_samples, 0, 1, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
-    SetReport<SetPeriodic_Ext>(effectBlock, 100, 0, 0, test_samples);
+    int effectBlock = CreateEffect(USB_EFFECT_SINE, test_samples, 0, 0, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
+    SetReport<SetPeriodic_Ext>(effectBlock, 100, 1, 0, test_samples);
     SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
-    int forces[2] = { 0 };
+    int forces[2] = {0};
     int forceSum = 0;
     for (int i = 0; i < test_samples; ++i)
     {
@@ -104,17 +132,17 @@ TEST_F(HidAbstractor, TestSineWave)
         TickFakeTime();
     }
 
-    EXPECT_EQ(forceSum, 0);
+    EXPECT_EQ(forceSum, 99);
 }
 
 TEST_F(HidAbstractor, TestSquareWave)
 {
     ResetFakeTime();
 
-    int effectBlock = CreateEffect(USB_EFFECT_SQUARE, 2, 0, 1, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
+    int effectBlock = CreateEffect(USB_EFFECT_SQUARE, 2, 0, 0, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
     SetReport<SetPeriodic_Ext>(effectBlock, 1, 0, 0, 2);
     SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
-    int forces[2] = { 0 };
+    int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
     EXPECT_EQ(forces[0], 1);
@@ -128,11 +156,11 @@ TEST_F(HidAbstractor, TestConstantEnvelope)
 {
     ResetFakeTime();
 
-    int effectBlock = CreateEffect(USB_EFFECT_CONSTANT, 5, 0, 1, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
+    int effectBlock = CreateEffect(USB_EFFECT_CONSTANT, 5, 0, 0, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
     SetReport<SetConstantForce_Ext>(effectBlock, 100);
     SetReport<SetEnvelope_Ext>(effectBlock, 0, 0, 2, 2);
     SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
-    int forces[2] = { 0 };
+    int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
     EXPECT_EQ(forces[0], 0);
@@ -162,10 +190,10 @@ TEST_F(HidAbstractor, TestConstantXSolo)
 {
     ResetFakeTime();
 
-    int effectBlock = CreateEffect(USB_EFFECT_CONSTANT, 1, 0, 1, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
+    int effectBlock = CreateEffect(USB_EFFECT_CONSTANT, 1, 0, 0, 255, 0xFF, X_AXIS_ENABLE, 0, 0, 0);
     SetReport<SetConstantForce_Ext>(effectBlock, 1);
     SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
-    int forces[2] = { 0 };
+    int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
     EXPECT_EQ(forces[0], 1);
@@ -181,10 +209,10 @@ TEST_F(HidAbstractor, TestConstantYSolo)
 {
     ResetFakeTime();
 
-    int effectBlock = CreateEffect(USB_EFFECT_CONSTANT, 1, 0, 1, 255, 0xFF, Y_AXIS_ENABLE, 0, USB_RAD_270, 0);
+    int effectBlock = CreateEffect(USB_EFFECT_CONSTANT, 1, 0, 0, 255, 0xFF, Y_AXIS_ENABLE, 0, USB_RAD_270, 0);
     SetReport<SetConstantForce_Ext>(effectBlock, 100);
     SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
-    int forces[2] = { 0 };
+    int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
     EXPECT_EQ(forces[0], 0);

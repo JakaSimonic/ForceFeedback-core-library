@@ -360,7 +360,7 @@ bool FfbEngine::IsEffectPlaying(const TEffectState &effect, uint64_t time)
   if (!(effect.state & MEFFECTSTATE_PLAYING))
     return false;
 
-  if (effect.block.triggerButton != 0xFF)
+  if (effect.block.triggerButton != USB_NO_TRIGGER_BUTTON)
   {
     return IsTriggerEffectPlaying(const_cast<TEffectState &>(effect), axisPosition.GetButtons(), time);
   }

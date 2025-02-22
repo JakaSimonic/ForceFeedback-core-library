@@ -205,6 +205,7 @@ typedef struct
 #define USB_MAX_PHASE 6283
 #define USB_PI 3141
 #define USB_NORMALIZE_RAD 1000
+#define USB_NO_TRIGGER_BUTTON 0xFF
 
 #define USB_EFFECT_CONSTANT 0x01
 #define USB_EFFECT_RAMP 0x02

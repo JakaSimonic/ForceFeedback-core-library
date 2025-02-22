@@ -1,6 +1,6 @@
 #ifndef HID_TYPES_EXT
 #define HID_TYPES_EXT
-#include "../../HIDReportType.h"
+#include "HIDReportType.h"
 
 struct BlockFree_Ext : public USB_FFBReport_BlockFree_Output_Data_t
 {

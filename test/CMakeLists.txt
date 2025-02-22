@@ -8,12 +8,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(Headers
-    helpers/hidTypesExt.hpp
+helpers/hidTypesExt.hpp
 )
 set(Sources 
-    test.cpp
+test.cpp
 )
 add_executable(${This} ${Sources} ${Headers})
+
+target_include_directories(${This} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../src")
 
 target_link_libraries(${This} PUBLIC 
     gtest_main

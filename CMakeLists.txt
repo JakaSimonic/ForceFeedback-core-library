@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.31)
-set(This FfbLib)
+set(This FFbCoreLibProject)
 
 project(${This} CXX)
 
@@ -9,17 +9,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 enable_testing()
 
-set(Headers 
-    HIDReportType.h
-    FfbReportHandler.h 
-    FfbEngine.h
-    UserInput.h
-)
-set(Sources 
-    FfbReportHandler.cpp
-    FfbEngine.cpp
-    UserInput.cpp
-)
-add_library(${This} STATIC ${Sources} ${Headers})
-
+add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(coverage)

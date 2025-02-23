@@ -27,7 +27,7 @@ UserInput::UserInput()
 {
 }
 
-void UserInput::UpdatePosition(int32_t newPosition[NUM_AXES])
+void UserInput::UpdatePosition(const int32_t newPosition[NUM_AXES])
 {
   for (uint8_t i = 0; i < NUM_AXES; ++i)
   {
@@ -40,7 +40,7 @@ void UserInput::UpdatePosition(int32_t newPosition[NUM_AXES])
   }
 }
 
-void UserInput::UpdateMetrics(int32_t newPosition[NUM_AXES], int32_t newSpeed[NUM_AXES], int32_t newAcc[NUM_AXES])
+void UserInput::UpdateMetrics(const int32_t newPosition[NUM_AXES], const int32_t newSpeed[NUM_AXES], const int32_t newAcc[NUM_AXES])
 {
   for (uint8_t i = 0; i < NUM_AXES; ++i)
   {

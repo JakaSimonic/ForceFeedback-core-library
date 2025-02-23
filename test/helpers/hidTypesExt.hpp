@@ -2,6 +2,30 @@
 #define HID_TYPES_EXT
 #include "HIDReportType.h"
 
+struct SetCondition_Ext : public USB_FFBReport_SetCondition_Output_Data_t
+{
+    SetCondition_Ext(
+        uint8_t effectBlockIndex,
+        uint8_t parameterBlockOffset,
+        int16_t cpOffset,
+        uint16_t positiveCoefficient,
+        uint16_t negativeCoefficient,
+        uint16_t positiveSaturation,
+        uint16_t negativeSaturation,
+        uint16_t deadBand)
+    {
+        this->reportId = SET_CONDITION_REPORT;
+        this->effectBlockIndex = effectBlockIndex;
+        this->parameterBlockOffset = parameterBlockOffset;
+        this->cpOffset = cpOffset;
+        this->positiveCoefficient = positiveCoefficient;
+        this->negativeCoefficient = negativeCoefficient;
+        this->positiveSaturation = positiveSaturation;
+        this->negativeSaturation = negativeSaturation;
+        this->deadBand = deadBand;
+    }
+};
+
 struct BlockFree_Ext : public USB_FFBReport_BlockFree_Output_Data_t
 {
     BlockFree_Ext(uint8_t effectBlockIndex = 0xFF)

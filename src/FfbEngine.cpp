@@ -121,19 +121,25 @@ int32_t ApplyCondition(int32_t metric, uint8_t gain, const USB_FFBReport_SetCond
   uint16_t deadBand = condition.deadBand;
   int16_t cpOffset = condition.cpOffset;
   uint16_t negativeCoefficient = condition.negativeCoefficient;
-  uint16_t negativeSaturation = condition.negativeSaturation;
+  int16_t negativeSaturation = -condition.negativeSaturation;
   uint16_t positiveSaturation = condition.positiveSaturation;
   uint16_t positiveCoefficient = condition.positiveCoefficient;
-  int32_t tempForce = 0;
+
+  float tempForce = 1.0 / USB_AXIS_MAX_ABSOLUTE;
 
   if (metric < (cpOffset - deadBand))
   {
-    tempForce = (metric - (cpOffset - deadBand)) * negativeCoefficient;
+    tempForce *= (metric - (cpOffset - deadBand)) * negativeCoefficient;
+    if (tempForce < negativeSaturation)
+      tempForce = negativeSaturation;
   }
   else if (metric > (cpOffset + deadBand))
   {
-    tempForce = (metric - (cpOffset + deadBand)) * positiveCoefficient;
+    tempForce *= (metric - (cpOffset + deadBand)) * positiveCoefficient;
+    if (tempForce > positiveSaturation)
+      tempForce = positiveSaturation;
   }
+
   return -tempForce;
 }
 

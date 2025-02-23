@@ -30,8 +30,8 @@ class UserInput
 {
 public:
     UserInput();
-    void UpdatePosition(int32_t[NUM_AXES]);
-    void UpdateMetrics(int32_t[NUM_AXES], int32_t[NUM_AXES], int32_t[NUM_AXES]);
+    void UpdatePosition(const int32_t[NUM_AXES]);
+    void UpdateMetrics(const int32_t[NUM_AXES], const int32_t[NUM_AXES], const int32_t[NUM_AXES]);
     void UpdateButtons(int8_t);
     uint8_t GetButtons();
 

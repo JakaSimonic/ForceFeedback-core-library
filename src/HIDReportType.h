@@ -200,6 +200,7 @@ typedef struct
 // ---- effect
 
 #define USB_DURATION_INFINITE 0x7FFF
+#define USB_AXIS_MAX_ABSOLUTE 0x7FFF
 #define USB_MAX_MAGNITUDE 255
 #define USB_MAX_GAIN 255
 #define USB_MAX_PHASE 6283
@@ -229,13 +230,6 @@ typedef struct
 #define X_AXIS_ENABLE 0x01
 #define Y_AXIS_ENABLE 0x02
 #define DIRECTION_ENABLE 0x04
-
-// these were needed for testing
-#define INERTIA_FORCE 0xFF
-#define FRICTION_FORCE 0xFF
-#define INERTIA_DEADBAND 0x30
-#define FRICTION_DEADBAND 0x30
-
 #define TYPE_SPECIFIC_BLOCK_OFFSET_1 0
 #define TYPE_SPECIFIC_BLOCK_OFFSET_2 1
 

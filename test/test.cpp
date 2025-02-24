@@ -28,6 +28,10 @@ void TickFakeTime(unsigned int time = 1)
 {
     current_time += time;
 }
+void SetFakeTime(unsigned int time)
+{
+    current_time = time;
+}
 void ResetFakeTime()
 {
     current_time = 0;
@@ -75,6 +79,46 @@ protected:
         ui.UpdatePosition(&list[0]);
     }
 };
+
+TEST_F(HidAbstractor, TestConstantTriggerButton)
+{
+    ResetFakeTime();
+
+    int effectBlock = CreateEffect(
+        USB_EFFECT_CONSTANT,
+        1,
+        2,
+        ZERO_SAMPLE_INTERVAL,
+        USB_MAX_GAIN,
+        1,
+        X_AXIS_ENABLE,
+        0,
+        0,
+        ZERO_START_DELAY);
+
+    SetReport<SetConstantForce_Ext>(effectBlock, USB_MAX_MAGNITUDE);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    int forces[2] = {0};
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 0);
+
+    ui.UpdateButtons(1);
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], USB_MAX_MAGNITUDE);
+
+    TickFakeTime();
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 0);
+
+    TickFakeTime(2);
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], USB_MAX_MAGNITUDE);
+
+    ui.UpdateButtons(0);
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 0);
+}
 
 TEST_F(HidAbstractor, TestConditionDirectionOffset)
 {
@@ -402,7 +446,7 @@ TEST_F(HidAbstractor, TestConstantEnvelope)
 
     TickFakeTime();
     ffe->ForceCalculator(forces);
-    EXPECT_EQ(forces[0], 49);
+    EXPECT_EQ(forces[0], 50);
 
     TickFakeTime();
     ffe->ForceCalculator(forces);
@@ -410,11 +454,52 @@ TEST_F(HidAbstractor, TestConstantEnvelope)
 
     TickFakeTime();
     ffe->ForceCalculator(forces);
-    EXPECT_EQ(forces[0], 49);
+    EXPECT_EQ(forces[0], 100);
+
+    TickFakeTime();
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 50);
 
     TickFakeTime();
     ffe->ForceCalculator(forces);
     EXPECT_EQ(forces[0], 0);
+}
+
+TEST_F(HidAbstractor, TestConstantEnvelopeFade)
+{
+    ResetFakeTime();
+
+    int effectBlock = CreateEffect(
+        USB_EFFECT_CONSTANT,
+        8,
+        ZERO_TRIGGER_REPEAT_INTERVAL,
+        ZERO_SAMPLE_INTERVAL,
+        USB_MAX_GAIN,
+        USB_NO_TRIGGER_BUTTON,
+        X_AXIS_ENABLE,
+        0,
+        0,
+        ZERO_START_DELAY);
+
+    SetReport<SetConstantForce_Ext>(effectBlock, USB_MAX_MAGNITUDE);
+    SetReport<SetEnvelope_Ext>(effectBlock, 1, 0, 0, 8);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    int forces[2] = {0};
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], USB_MAX_MAGNITUDE);
+
+    SetFakeTime(3);
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 159);
+
+    SetFakeTime(6);
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 63);
+
+    SetFakeTime(7);
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 31);
 
     TickFakeTime();
     ffe->ForceCalculator(forces);

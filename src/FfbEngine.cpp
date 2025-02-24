@@ -194,9 +194,9 @@ void FfbEngine::ForceCalculator(int32_t ffbForce[NUM_AXES])
   float forceSum[NUM_AXES] = {0};
   uint64_t time = getTimeMilli();
 
-  for (uint8_t idx = 0; idx <= MAX_EFFECTS; ++idx)
+  for (uint8_t idx = 0; idx < MAX_EFFECTS; ++idx)
   {
-    const TEffectState effect = effectStates[idx];
+    const TEffectState &effect = effectStates[idx];
 
     if (IsEffectPlaying(effect, time))
     {
@@ -308,7 +308,8 @@ float FfbEngine::GetEnvelope(const USB_FFBReport_SetEnvelope_Output_Data_t &enve
 
   if (elapsedTime < attackTime)
   {
-    float slope = (USB_MAX_MAGNITUDE - attackLevel) / attackTime;
+    float height = (USB_MAX_MAGNITUDE - attackLevel);
+    float slope = height / attackTime;
     envelopeValue = slope * elapsedTime + attackLevel;
     return envelopeValue / USB_MAX_MAGNITUDE;
   }
@@ -318,10 +319,10 @@ float FfbEngine::GetEnvelope(const USB_FFBReport_SetEnvelope_Output_Data_t &enve
     return 1.0;
   }
 
-  --duration;
-  if (elapsedTime > (duration - fadeTime))
+  if (elapsedTime >= (duration - fadeTime))
   {
-    float slope = (USB_MAX_MAGNITUDE - fadeLevel) / fadeTime;
+    float height = (USB_MAX_MAGNITUDE - fadeLevel);
+    float slope = height / fadeTime;
     envelopeValue = slope * (duration - elapsedTime) + fadeLevel;
     return envelopeValue / USB_MAX_MAGNITUDE;
   }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.31)
-set(This FfbLibTests)
+set(This tests)
 
 project(${This} CXX)
 
@@ -7,15 +7,19 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(Headers
-helpers/hidTypesExt.hpp
+set(TEST_HEADERS
+    src/helpers/hidTypesExt.hpp
 )
-set(Sources 
-test.cpp
+set(TEST_SOURCES 
+    src/test.cpp
 )
-add_executable(${This} ${Sources} ${Headers})
+add_executable(${This} EXCLUDE_FROM_ALL ${TEST_SOURCES} ${TEST_HEADERS})
 
-target_include_directories(${This} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../src")
+list(TRANSFORM TEST_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
+list(TRANSFORM TEST_HEADERS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
+
+# target_include_directories(${This} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_include_directories(${This} PUBLIC "${CMAKE_SOURCE_DIR}/src")
 
 target_link_libraries(${This} PUBLIC 
     gtest_main
@@ -28,3 +32,5 @@ add_test(
     NAME ${This}
     COMMAND ${This}
 )
+
+add_subdirectory(coverage)

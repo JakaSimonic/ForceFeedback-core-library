@@ -19,9 +19,9 @@ list(TRANSFORM TEST_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 list(TRANSFORM TEST_HEADERS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 
 # target_include_directories(${This} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
-target_include_directories(${This} PUBLIC "${CMAKE_SOURCE_DIR}/src")
+target_include_directories(${This} PRIVATE "${CMAKE_SOURCE_DIR}/src")
 
-target_link_libraries(${This} PUBLIC 
+target_link_libraries(${This} PRIVATE 
     gtest_main
     gtest
     pthread

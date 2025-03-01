@@ -26,4 +26,4 @@ list(TRANSFORM FFB_HEADERS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 
 add_library(${This} STATIC ${FFB_SOURCES} ${FFB_HEADERS})
 
-add_subdirectory(test)
+add_subdirectory(tests)

@@ -18,21 +18,21 @@
 #define ZERO_SAMPLE_INTERVAL 0
 #define ZERO_START_DELAY 0
 
-uint64_t current_time = 0;
+static uint64_t current_time = 0;
 
-uint64_t GetFakeTime()
+static uint64_t GetFakeTime()
 {
     return current_time;
 }
-void TickFakeTime(unsigned int time = 1)
+static void TickFakeTime(unsigned int time = 1)
 {
     current_time += time;
 }
-void SetFakeTime(unsigned int time)
+static void SetFakeTime(unsigned int time)
 {
     current_time = time;
 }
-void ResetFakeTime()
+static void ResetFakeTime()
 {
     current_time = 0;
 }
@@ -41,13 +41,13 @@ class HidAbstractor : public ::testing::Test
 protected:
     void SetUp() override
     {
-        ffh = new FfbReportHandler(GetFakeTime);
-        ffe = new FfbEngine(*ffh, ui, GetFakeTime);
+        ffh = std::make_unique<FfbReportHandler>(GetFakeTime);
+        ffe = std::make_unique<FfbEngine>(*ffh, ui, GetFakeTime);
     }
 
     UserInput ui;
-    FfbReportHandler *ffh = nullptr;
-    FfbEngine *ffe = nullptr;
+    std::unique_ptr<FfbReportHandler> ffh;
+    std::unique_ptr<FfbEngine> ffe;
 
     template <typename... Args>
     int CreateEffect(Args... args)
@@ -78,7 +78,147 @@ protected:
     {
         ui.UpdatePosition(&list[0]);
     }
+
+    void UpdateMetrics(std::array<std::array<int32_t, NUM_AXES>, UserInput::metricsCount> &&list)
+    {
+        ui.UpdateMetrics(&list[UserInput::position][0], &list[UserInput::speed][0], &list[UserInput::acceleration][0]);
+    }
 };
+class HidAbstractorParametrized : public HidAbstractor,
+                                  public ::testing::WithParamInterface<int>
+{
+};
+
+TEST_F(HidAbstractor, TestDeviceGain)
+{
+    ResetFakeTime();
+
+    int effectBlock = CreateEffect(
+        USB_EFFECT_CONSTANT,
+        1,
+        ZERO_TRIGGER_REPEAT_INTERVAL,
+        ZERO_SAMPLE_INTERVAL,
+        USB_MAX_GAIN,
+        USB_NO_TRIGGER_BUTTON,
+        X_AXIS_ENABLE,
+        0,
+        0,
+        ZERO_START_DELAY);
+
+    SetReport<SetConstantForce_Ext>(effectBlock, 100);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    int forces[2] = {0};
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 100);
+
+    SetReport<DeviceGain_Ext>(128);
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 50);
+}
+
+TEST_F(HidAbstractor, TestDelay)
+{
+    ResetFakeTime();
+
+    int effectBlock = CreateEffect(
+        USB_EFFECT_CONSTANT,
+        1,
+        ZERO_TRIGGER_REPEAT_INTERVAL,
+        ZERO_SAMPLE_INTERVAL,
+        USB_MAX_GAIN,
+        USB_NO_TRIGGER_BUTTON,
+        X_AXIS_ENABLE,
+        0,
+        0,
+        1);
+
+    SetReport<SetConstantForce_Ext>(effectBlock, 100);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    int forces[2] = {0};
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 0);
+
+    TickFakeTime();
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 100);
+
+    TickFakeTime();
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 0);
+}
+
+TEST_F(HidAbstractor, TestPaused)
+{
+    ResetFakeTime();
+
+    int effectBlock = CreateEffect(
+        USB_EFFECT_CONSTANT,
+        2,
+        ZERO_TRIGGER_REPEAT_INTERVAL,
+        ZERO_SAMPLE_INTERVAL,
+        USB_MAX_GAIN,
+        USB_NO_TRIGGER_BUTTON,
+        X_AXIS_ENABLE,
+        0,
+        0,
+        ZERO_START_DELAY);
+
+    SetReport<SetConstantForce_Ext>(effectBlock, 100);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    int forces[2] = {0};
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 100);
+
+    SetReport<DeviceControl_Ext>(5);
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 0);
+
+    TickFakeTime();
+    SetReport<DeviceControl_Ext>(6);
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 100);
+
+    TickFakeTime();
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 100);
+
+    TickFakeTime();
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], 0);
+}
+
+TEST_P(HidAbstractorParametrized, TestAllConditionEffects)
+{
+    int conditionType = GetParam();
+    int effectBlock = CreateEffect(
+        conditionType,
+        USB_DURATION_INFINITE,
+        ZERO_TRIGGER_REPEAT_INTERVAL,
+        ZERO_SAMPLE_INTERVAL,
+        USB_MAX_GAIN,
+        USB_NO_TRIGGER_BUTTON,
+        X_AXIS_ENABLE,
+        0,
+        0,
+        ZERO_START_DELAY);
+
+    SetReport<SetCondition_Ext>(effectBlock, 0, USB_AXIS_MAX_ABSOLUTE / 4, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, USB_AXIS_MAX_ABSOLUTE / 4);
+    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+
+    int forces[2] = {0};
+
+    UpdateMetrics({USB_AXIS_MAX_ABSOLUTE, USB_AXIS_MAX_ABSOLUTE, USB_AXIS_MAX_ABSOLUTE, USB_AXIS_MAX_ABSOLUTE, USB_AXIS_MAX_ABSOLUTE, USB_AXIS_MAX_ABSOLUTE});
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], -127);
+}
+INSTANTIATE_TEST_CASE_P(
+    TestAllConditionEffects,
+    HidAbstractorParametrized,
+    ::testing::Values(
+        USB_EFFECT_SPRING, USB_EFFECT_DAMPER, USB_EFFECT_INERTIA, USB_EFFECT_FRICTION));
 
 TEST_F(HidAbstractor, TestConstantTriggerButton)
 {

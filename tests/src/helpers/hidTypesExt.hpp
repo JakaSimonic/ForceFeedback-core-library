@@ -2,6 +2,26 @@
 #define HID_TYPES_EXT
 #include "HIDReportType.h"
 
+struct DeviceGain_Ext : public USB_FFBReport_DeviceGain_Output_Data_t
+{
+    DeviceGain_Ext(
+        uint8_t gain)
+    {
+        this->reportId = SET_DEVICE_GAIN_REPORT;
+        this->gain = gain;
+    }
+};
+
+struct DeviceControl_Ext : public USB_FFBReport_DeviceControl_Output_Data_t
+{
+    DeviceControl_Ext(
+        uint8_t control)
+    {
+        this->reportId = SET_DEVICE_CONTROL_REPORT;
+        this->control = control;
+    }
+};
+
 struct SetCondition_Ext : public USB_FFBReport_SetCondition_Output_Data_t
 {
     SetCondition_Ext(

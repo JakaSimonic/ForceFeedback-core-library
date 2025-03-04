@@ -178,20 +178,16 @@ void FfbReportHandler::FfbHandle_DeviceControl(USB_FFBReport_DeviceControl_Outpu
     // 6=Continue
     devicePaused = 0;
 
-    if (pauseTime == 0)
-      break;
-
     uint32_t pauseLength = getTimeMilli() - pauseTime;
     for (int id = 0; id < MAX_EFFECTS; ++id)
     {
       if (gEffectStates[id].state & MEFFECTSTATE_PLAYING)
       {
-        if (pauseTime <= gEffectStates[id].startTime)
+        if (pauseTime < gEffectStates[id].startTime)
           continue;
         gEffectStates[id].startTime += pauseLength;
       }
     }
-    pauseTime = 0;
     break;
   }
 }
@@ -220,7 +216,7 @@ void FfbReportHandler::FfbHandle_SetEffect(USB_FFBReport_SetEffect_Output_Data_t
 
   float normalizedDirectionX = data->directionX;
   normalizedDirectionX /= USB_NORMALIZE_RAD;
-  
+
   float normalizedDirectionY = data->directionY;
   normalizedDirectionY /= USB_NORMALIZE_RAD;
 
@@ -358,7 +354,7 @@ void FfbReportHandler::FfbOnUsbData(uint8_t *data, uint16_t len)
   case SET_BLOCK_FREE_REPORT:
     FfbHandle_BlockFree((USB_FFBReport_BlockFree_Output_Data_t *)data);
     break;
-  case SET_DEVICE_FREE_REPORT:
+  case SET_DEVICE_CONTROL_REPORT:
     FfbHandle_DeviceControl((USB_FFBReport_DeviceControl_Output_Data_t *)data);
     break;
   case SET_DEVICE_GAIN_REPORT:

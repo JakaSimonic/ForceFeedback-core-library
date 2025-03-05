@@ -89,6 +89,85 @@ class HidAbstractorParametrized : public HidAbstractor,
 {
 };
 
+TEST_F(HidAbstractor, TestAdministration)
+{
+    int assignedCount = 0;
+    for (;;)
+    {
+        int effectBlock = CreateEffect(
+            USB_EFFECT_CONSTANT,
+            1,
+            ZERO_TRIGGER_REPEAT_INTERVAL,
+            ZERO_SAMPLE_INTERVAL,
+            USB_MAX_GAIN,
+            USB_NO_TRIGGER_BUTTON,
+            X_AXIS_ENABLE,
+            0,
+            0,
+            ZERO_START_DELAY);
+
+        SetReport<SetConstantForce_Ext>(effectBlock, 1);
+        SetReport<EffectOperation_Ext>(effectBlock, 1);
+        if (effectBlock == 0)
+        {
+            break;
+        }
+        ++assignedCount;
+    }
+    EXPECT_EQ(assignedCount, MAX_EFFECTS);
+
+    int forces[2] = {0};
+
+    ffe->ForceCalculator(forces);
+    EXPECT_EQ(forces[0], MAX_EFFECTS);
+
+    {
+        auto ffbState = (USB_FFBReport_PIDBlockLoad_Feature_Data_t *)ffh->FfbOnPIDBlockLoad();
+        EXPECT_EQ(ffbState->ramPoolAvailable, 0);
+    }
+    {
+        SetReport<BlockFree_Ext>(MAX_EFFECTS);
+        ffe->ForceCalculator(forces);
+        EXPECT_EQ(forces[0], MAX_EFFECTS - 1);
+
+        int effectBlock = CreateEffect(
+            USB_EFFECT_CONSTANT,
+            1,
+            ZERO_TRIGGER_REPEAT_INTERVAL,
+            ZERO_SAMPLE_INTERVAL,
+            USB_MAX_GAIN,
+            USB_NO_TRIGGER_BUTTON,
+            X_AXIS_ENABLE,
+            0,
+            0,
+            ZERO_START_DELAY);
+
+        SetReport<SetConstantForce_Ext>(effectBlock, 1);
+        SetReport<EffectOperation_Ext>(effectBlock, 1);
+        ffe->ForceCalculator(forces);
+        EXPECT_EQ(forces[0], MAX_EFFECTS);
+    }
+    {
+        SetReport<EffectOperation_Ext>(MAX_EFFECTS / 2, 2);
+        ffe->ForceCalculator(forces);
+        EXPECT_EQ(forces[0], 1);
+    }
+    {
+        SetReport<EffectOperation_Ext>(MAX_EFFECTS / 2, 3);
+        ffe->ForceCalculator(forces);
+        EXPECT_EQ(forces[0], 0);
+    }
+    {
+        SetReport<BlockFree_Ext>();
+
+        auto ffbState = (USB_FFBReport_PIDBlockLoad_Feature_Data_t *)ffh->FfbOnPIDBlockLoad();
+        EXPECT_EQ(ffbState->ramPoolAvailable, MEMORY_SIZE);
+
+        ffe->ForceCalculator(forces);
+        EXPECT_EQ(forces[0], 0);
+    }
+}
+
 TEST_F(HidAbstractor, TestDeviceGain)
 {
     ResetFakeTime();
@@ -106,7 +185,7 @@ TEST_F(HidAbstractor, TestDeviceGain)
         ZERO_START_DELAY);
 
     SetReport<SetConstantForce_Ext>(effectBlock, 100);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
@@ -134,7 +213,7 @@ TEST_F(HidAbstractor, TestDelay)
         1);
 
     SetReport<SetConstantForce_Ext>(effectBlock, 100);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
@@ -166,7 +245,7 @@ TEST_F(HidAbstractor, TestPaused)
         ZERO_START_DELAY);
 
     SetReport<SetConstantForce_Ext>(effectBlock, 100);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
@@ -206,7 +285,7 @@ TEST_P(HidAbstractorParametrized, TestAllConditionEffects)
         ZERO_START_DELAY);
 
     SetReport<SetCondition_Ext>(effectBlock, 0, USB_AXIS_MAX_ABSOLUTE / 4, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, USB_AXIS_MAX_ABSOLUTE / 4);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
 
     int forces[2] = {0};
 
@@ -237,7 +316,7 @@ TEST_F(HidAbstractor, TestConstantTriggerButton)
         ZERO_START_DELAY);
 
     SetReport<SetConstantForce_Ext>(effectBlock, USB_MAX_MAGNITUDE);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
@@ -276,7 +355,7 @@ TEST_F(HidAbstractor, TestConditionDirectionOffset)
 
     SetReport<SetCondition_Ext>(effectBlock, 0, USB_AXIS_MAX_ABSOLUTE / 4, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, USB_AXIS_MAX_ABSOLUTE / 4);
     SetReport<SetCondition_Ext>(effectBlock, 1, USB_AXIS_MAX_ABSOLUTE / 4, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, USB_AXIS_MAX_ABSOLUTE / 4);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
 
     int forces[2] = {0};
 
@@ -318,7 +397,7 @@ TEST_F(HidAbstractor, TestConditionDirectionEnable)
         ZERO_START_DELAY);
 
     SetReport<SetCondition_Ext>(effectBlock, 0, 0, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, USB_MAX_GAIN, 0);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
 
     int forces[2] = {0};
 
@@ -366,7 +445,7 @@ TEST_F(HidAbstractor, TestRampForce)
         ZERO_START_DELAY);
 
     SetReport<SetRampForce_Ext>(effectBlock, 60, 100);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
 
     int forces[2] = {0};
     ffe->ForceCalculator(forces);
@@ -407,7 +486,7 @@ TEST_F(HidAbstractor, TestTriangleWave)
         ZERO_START_DELAY);
 
     SetReport<SetPeriodic_Ext>(effectBlock, 100, 1, 0, test_samples);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
     int forceSum = 0;
     for (int i = 0; i < test_samples; ++i)
@@ -439,7 +518,7 @@ TEST_F(HidAbstractor, TestSawtoothUpDownSimultaneous)
         ZERO_START_DELAY);
 
     SetReport<SetPeriodic_Ext>(effectBlock, 100, 0, 0, test_samples);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
 
     effectBlock = CreateEffect(
         USB_EFFECT_SAWTOOTHDOWN,
@@ -454,7 +533,7 @@ TEST_F(HidAbstractor, TestSawtoothUpDownSimultaneous)
         ZERO_START_DELAY);
 
     SetReport<SetPeriodic_Ext>(effectBlock, 100, 0, 0, test_samples);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
 
     int forces[2] = {0};
     for (int i = 0; i < test_samples; ++i)
@@ -487,7 +566,7 @@ TEST_F(HidAbstractor, TestPeriodicPhase)
             ZERO_START_DELAY);
 
         SetReport<SetPeriodic_Ext>(effectBlock, 100, 0, phase, test_samples);
-        SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+        SetReport<EffectOperation_Ext>(effectBlock, 1);
         int forces[2] = {0};
         int forceSum = 0;
         for (int i = 0; i < test_samples; ++i)
@@ -519,7 +598,7 @@ TEST_F(HidAbstractor, TestSineWave)
         ZERO_START_DELAY);
 
     SetReport<SetPeriodic_Ext>(effectBlock, 100, 1, 0, test_samples);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
     int forceSum = 0;
     for (int i = 0; i < test_samples; ++i)
@@ -549,7 +628,7 @@ TEST_F(HidAbstractor, TestSquareWave)
         ZERO_START_DELAY);
 
     SetReport<SetPeriodic_Ext>(effectBlock, 1, 0, 0, 2);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
@@ -578,7 +657,7 @@ TEST_F(HidAbstractor, TestConstantEnvelope)
 
     SetReport<SetConstantForce_Ext>(effectBlock, 100);
     SetReport<SetEnvelope_Ext>(effectBlock, 0, 0, 2, 2);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
@@ -623,7 +702,7 @@ TEST_F(HidAbstractor, TestConstantEnvelopeFade)
 
     SetReport<SetConstantForce_Ext>(effectBlock, USB_MAX_MAGNITUDE);
     SetReport<SetEnvelope_Ext>(effectBlock, 1, 0, 0, 8);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
@@ -663,7 +742,7 @@ TEST_F(HidAbstractor, TestConstantXSolo)
         ZERO_START_DELAY);
 
     SetReport<SetConstantForce_Ext>(effectBlock, 1);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
 
     ffe->ForceCalculator(forces);
@@ -693,7 +772,7 @@ TEST_F(HidAbstractor, TestConstantYSolo)
         ZERO_START_DELAY);
 
     SetReport<SetConstantForce_Ext>(effectBlock, 100);
-    SetReport<EffectOperation_Ext>(effectBlock, 1, 0);
+    SetReport<EffectOperation_Ext>(effectBlock, 1);
     int forces[2] = {0};
 
     ffe->ForceCalculator(forces);

@@ -137,7 +137,7 @@ struct EffectOperation_Ext : public USB_FFBReport_EffectOperation_Output_Data_t
     EffectOperation_Ext(
         uint8_t effectBlockIndex,
         uint8_t operation,
-        uint16_t loopCount)
+        uint16_t loopCount = 0)
     {
         this->reportId = SET_EFFECT_OPERATION_REPORT;
         this->effectBlockIndex = effectBlockIndex;
